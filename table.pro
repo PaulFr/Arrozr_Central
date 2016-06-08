@@ -12,8 +12,9 @@ TARGET = table
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    table.cpp
+SOURCES += \
+    table.cpp \
+    index.cpp
 
 HEADERS  += \
     table.h
