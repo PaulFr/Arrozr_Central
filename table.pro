@@ -12,9 +12,11 @@ TARGET = table
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp
+SOURCES += main.cpp \
+    table.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += \
+    table.h
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    table.ui
