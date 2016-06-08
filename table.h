@@ -17,9 +17,10 @@ public:
 
 private:
     Ui::Table *ui;
-
+    unsigned char ToByte(bool b[8]);
+    void afficheBytes(unsigned char bytes[42]);
 private slots:
-void cellSelected(int nRow, int nCol);
+void selectedItems();
 };
 
 #endif // MAINWINDOW_H
