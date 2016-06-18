@@ -2,6 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QString>
+#include <QMessageBox>
+#include <QCheckBox>
+
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +21,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    unsigned char ToByte(bool b[8]);
+    void afficheBytes(unsigned char bytes[42]);
+
+private slots:
+    void selectedItems();
 };
 
 #endif // MAINWINDOW_H
