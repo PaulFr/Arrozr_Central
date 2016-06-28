@@ -7,6 +7,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect( ui->Envoyer, SIGNAL( pressed() ), this, SLOT( selectedItems() ) );
+    connect(ui->listView, SIGNAL(clicked(QModelIndex)), this, SLOT( selectDevice(QModelIndex) ));
+    connect(&watcher, SIGNAL(detected(QStringList*)), this, SLOT(updateDevices(QStringList*)));
+    watcher.start();
 
 
     ui->tableWidget->setRowCount(48);
@@ -17,13 +20,14 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->tableWidget->setVerticalHeaderItem(i, new QTableWidgetItem( QString("%1").arg(i/2, 2, 10, QChar('0')) + "h" + half));
     }
 
-    ui->tableWidget->setHorizontalHeaderItem(0,new QTableWidgetItem("Lundi"));
-    ui->tableWidget->setHorizontalHeaderItem(1,new QTableWidgetItem("Mardi"));
-    ui->tableWidget->setHorizontalHeaderItem(2,new QTableWidgetItem("Mercredi"));
-    ui->tableWidget->setHorizontalHeaderItem(3,new QTableWidgetItem("Jeudi"));
-    ui->tableWidget->setHorizontalHeaderItem(4,new QTableWidgetItem("Vendredi"));
-    ui->tableWidget->setHorizontalHeaderItem(5,new QTableWidgetItem("Samedi"));
-    ui->tableWidget->setHorizontalHeaderItem(6,new QTableWidgetItem("Dimanche"));
+    ui->tableWidget->setHorizontalHeaderItem(0,new QTableWidgetItem("Dimanche"));
+    ui->tableWidget->setHorizontalHeaderItem(1,new QTableWidgetItem("Lundi"));
+    ui->tableWidget->setHorizontalHeaderItem(2,new QTableWidgetItem("Mardi"));
+    ui->tableWidget->setHorizontalHeaderItem(3,new QTableWidgetItem("Mercredi"));
+    ui->tableWidget->setHorizontalHeaderItem(4,new QTableWidgetItem("Jeudi"));
+    ui->tableWidget->setHorizontalHeaderItem(5,new QTableWidgetItem("Vendredi"));
+    ui->tableWidget->setHorizontalHeaderItem(6,new QTableWidgetItem("Samedi"));
+
 
    for (int col = 0; col < ui->tableWidget->columnCount(); ++col) {
         for (int row = 0; row < ui->tableWidget->rowCount(); ++row) {
@@ -44,6 +48,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget->horizontalHeader()->setStyleSheet(styleHeader);
     ui->tableWidget->verticalHeader()->setStyleSheet("::section {background-color: #262626;color:#f2f2f2}");
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+}
+
+void MainWindow::selectDevice(QModelIndex index){
+    ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">"+model.itemData(index).first().toString()+"</span></p></body></html>");
+}
+
+void MainWindow::updateDevices(QStringList *deviceList){
+    if(model.stringList() != *deviceList){
+        model.setStringList(*deviceList);
+        ui->listView->setModel(&model);
+    }
 }
 
 void MainWindow::selectedItems()

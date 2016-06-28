@@ -13,8 +13,12 @@ TEMPLATE = app
 
 
 SOURCES += mainwindow.cpp\
-        main.cpp
+        main.cpp \
+    devicewatcher.cpp \
+    device.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    devicewatcher.h \
+    device.h
 
 FORMS    += mainwindow.ui
