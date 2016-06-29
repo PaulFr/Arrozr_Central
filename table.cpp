@@ -88,6 +88,24 @@ void Table::afficheBytes(unsigned char bytes[42]){
 
 }
 
+void Table::rempliTable(unsigned int bytes[336]){
+
+    int col=0;
+    int row=0;
+    for (int i = 0; i < sizeof(bytes); ++i) {
+        ++row;
+        if(row==48){
+            row=0;
+            ++col;
+        }
+        if (bytes[i] == 1){
+            ui->tableWidget->item(row,col)->setSelected(true);
+        }
+    }
+    QMessageBox::information(this, "","il y a : "+QString::number(sizeof(bytes)));
+
+}
+
 unsigned char Table::ToByte(bool b[8])
 {
     unsigned char c = 0;

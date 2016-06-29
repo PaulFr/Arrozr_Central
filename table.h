@@ -13,6 +13,7 @@ class Table : public QMainWindow
 
 public:
     explicit Table(QWidget *parent = 0);
+    void rempliTable(unsigned int bytes[336]);
     ~Table();
 
 private:
