@@ -38,6 +38,7 @@ void Device::run(){
                     QByteArray ba = serial.readAll();
                     if(ba.at(0) == 0x01){
                         this->setId(ba.at(1));
+                        emit authed(this);
                     }
                     return;
                     qDebug()<<"read:"<<ba ;

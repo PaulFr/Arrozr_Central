@@ -16,9 +16,11 @@ public:
     ~DeviceWatcher();
     virtual void run();
 signals:
-    void detected(QStringList *deviceList);
     void disconnected(Device *device);
     void connected(Device *device);
+
+public slots:
+    void authedDevice(Device *device);
 
 private:
     QStringList *deviceList;

@@ -7,8 +7,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect( ui->Envoyer, SIGNAL( pressed() ), this, SLOT( selectedItems() ) );
-    connect(ui->listView, SIGNAL(clicked(QModelIndex)), this, SLOT( selectDevice(QModelIndex) ));
-    connect(&watcher, SIGNAL(detected(QStringList*)), this, SLOT(updateDevices(QStringList*)));
+    connect(ui->listWidget, SIGNAL(clicked(QModelIndex)), this, SLOT( selectDevice(QModelIndex) ));
+    connect(&watcher, SIGNAL(connected(Device*)), this, SLOT(addDevice(Device*)));
+    connect(&watcher, SIGNAL(disconnected(Device*)), this, SLOT(removeDevice(Device*)));
     watcher.start();
 
 
@@ -51,14 +52,30 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 void MainWindow::selectDevice(QModelIndex index){
-    ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">"+model.itemData(index).first().toString()+"</span></p></body></html>");
+    ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">"+ui->listWidget->model()->itemData(index).first().toString()+"</span></p></body></html>");
 }
 
-void MainWindow::updateDevices(QStringList *deviceList){
-    if(model.stringList() != *deviceList){
-        model.setStringList(*deviceList);
-        ui->listView->setModel(&model);
-    }
+void MainWindow::addDevice(Device *device){
+    int id = device->getId();
+    devices.insert(id, device);
+    qDebug() << "new auth :" << id;
+
+    QListWidgetItem *newItem = new QListWidgetItem;
+    newItem->setText(QString("%1 - "+device->getPort()).arg(id));
+    devicesItems.insert(id, newItem);
+
+    ui->listWidget->insertItem(device->getId(), newItem);
+}
+
+void MainWindow::removeDevice(Device *device){
+    int id = device->getId();
+
+    qDebug() << "rem device :" << id;
+    devices.remove(id);
+    QListWidgetItem *item = *devicesItems.find(id);
+    ui->listWidget->removeItemWidget(item);
+    devicesItems.remove(id);
+    delete item;
 }
 
 void MainWindow::selectedItems()

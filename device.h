@@ -23,7 +23,7 @@ public:
     bool isModule();
 
 signals:
-    void authed();
+    void authed(Device *device);
 
 private:
     QString _port;

@@ -16,6 +16,10 @@ DeviceWatcher::~DeviceWatcher(){
 
 }
 
+void DeviceWatcher::authedDevice(Device *device){
+    emit connected(device);
+}
+
 void DeviceWatcher::run(){
     oldDeviceList = new QStringList();
     connectedDevices = new QHash<QString, Device*>();
@@ -35,7 +39,8 @@ void DeviceWatcher::run(){
         QSet<QString> oldDevices = oldDeviceList->toSet().subtract(deviceList->toSet());
 
         foreach (const QString &device, oldDevices){
-            emit disconnected(*connectedDevices->find(device));
+            //if(*(*connectedDevices->find(device))->isModule())
+                emit disconnected(*connectedDevices->find(device));
             connectedDevices->remove(device);
          }
 
@@ -44,14 +49,11 @@ void DeviceWatcher::run(){
             newOne->start();
             connectedDevices->insert(device, newOne);
 
-            emit connected(newOne);
+            connect(newOne, SIGNAL(authed(Device*)), this, SLOT(authedDevice(Device*)));
         }
 
 
         *oldDeviceList = *deviceList;
-        emit detected(deviceList);
-
-
         this->msleep(500);
     }
 }

@@ -7,9 +7,12 @@
 #include <QCheckBox>
 #include <QVariant>
 #include <QDebug>
+#include <QHash>
 #include <iostream>
+#include <QListWidgetItem>
 #include <QStringListModel>
 #include "devicewatcher.h"
+#include "device.h"
 
 
 namespace Ui {
@@ -27,7 +30,8 @@ public:
 private:
     Ui::MainWindow *ui;
     DeviceWatcher watcher;
-    QStringListModel model;
+    QHash<int, Device*> devices;
+    QHash<int, QListWidgetItem*> devicesItems;
     unsigned char ToByte(bool b[8]);
     void afficheBytes(unsigned char bytes[42]);
 
@@ -35,7 +39,8 @@ private slots:
     void selectedItems();
 
 public slots:
-    void updateDevices(QStringList *deviceList);
+    void addDevice(Device *device);
+    void removeDevice(Device *device);
     void selectDevice(QModelIndex index);
 };
 
