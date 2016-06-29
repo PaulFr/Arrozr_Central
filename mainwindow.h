@@ -32,8 +32,14 @@ private:
     DeviceWatcher watcher;
     QHash<int, Device*> devices;
     QHash<int, QListWidgetItem*> devicesItems;
+    Device *selectedDevice;
     unsigned char ToByte(bool b[8]);
     void afficheBytes(unsigned char bytes[42]);
+    void setListeners();
+    void createTimetable();
+    void setTimetableStyle();
+    void enableUi();
+    void disableUi();
 
 private slots:
     void selectedItems();

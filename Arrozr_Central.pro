@@ -6,6 +6,8 @@
 
 QT       += core gui serialport
 
+CONFIG+=C++11 console debug
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = Arrozr_Central
