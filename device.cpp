@@ -8,6 +8,7 @@ Device::Device(QString port, QObject *parent) :QThread(parent), _port(port), _id
     lastCommand = new char;
     *lastCommand = 0x00;
     askCommand = 0x00;
+    _lastSprinkle = "dernièrement...";
 }
 
 Device::~Device(){
@@ -57,9 +58,13 @@ void Device::run(){
         }
 
         if(askCommand != 0x00){
-            serial->write(&askCommand);
-            serial->flush();
-            qDebug() << QString("Ask : %1").arg(askCommand);
+            if(askCommand == 0x02){
+                sendConf();
+            }else{
+                serial->write(&askCommand);
+                serial->flush();
+                qDebug() << QString("Ask : %1").arg(askCommand);
+            }
             askCommand = 0x00;
         }
 
@@ -118,6 +123,10 @@ void Device::readData(QByteArray requestData){
     }
 }
 
+QString Device::getLastSprinkle(){
+    return _lastSprinkle;
+}
+
 void Device::processRequest(char *command, char *buffer){
     if(*command == 0x01 && !isModule()){
         qDebug() << "Auth";
@@ -127,22 +136,34 @@ void Device::processRequest(char *command, char *buffer){
 
     }else if(*command == 0x02){
         qDebug() << "Demande EDT";
-        QByteArray scheduleCommand;
-        scheduleCommand.resize(44);
-        scheduleCommand[0] = 0x02;
-        for(int i =0; i < _schedule.count(); i++){
-          scheduleCommand[i+1] = _schedule[i];
-        }
-        scheduleCommand[43] = _seuil;
-        serial->write(scheduleCommand);
-        serial->flush();
-        serial->waitForBytesWritten(100);
+        sendConf();
+
     }else if(*command == 0x03){
         qDebug() << "Reception état";
         _humidity = buffer[0];
         _sprinkling = buffer[1] == 0x01;
+        if(_sprinkling){
+            _lastSprinkle = QDateTime::currentDateTime().toString("dd/MM/yyyy, HH:mm:ss");
+        }
         emit update();
     }
+}
+
+void Device::sendConf(){
+    qDebug() << "Envoi de la conf";
+    QByteArray scheduleCommand;
+    scheduleCommand.resize(44);
+    scheduleCommand[0] = 0x02;
+    for(int i =0; i < _schedule.count(); i++){
+      scheduleCommand[i+1] = _schedule[i];
+    }
+    scheduleCommand[43] = _seuil;
+    serial->write(scheduleCommand);
+    serial->flush();
+}
+
+void Device::askSendConf(){
+    askCommand = 0x02;
 }
 
 void Device::refresh(){

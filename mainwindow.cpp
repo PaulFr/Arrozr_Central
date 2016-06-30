@@ -31,10 +31,12 @@ void MainWindow::refreshUi(){
     ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">"+selectedDevice->getName()+"</span></p></body></html>");
     ui->horizontalSlider->setValue(selectedDevice->getSeuil());
     ui->nameEdit->setText(selectedDevice->getName());
+    refreshDevice();
 }
 
 void MainWindow::refreshDevice(){
     ui->humidite->display(selectedDevice->getHumidity());
+    ui->arrosage->setText(selectedDevice->getLastSprinkle());
 }
 
 void MainWindow::selectDevice(QModelIndex index){
@@ -128,7 +130,7 @@ void MainWindow::selectedItems()
     //qDebug() << "Available : " << schedule.size() << QString(schedule.toHex());
     selectedDevice->setSchedule(schedule);
     selectedDevice->saveSettings();
-
+    selectedDevice->askSendConf();
 
 }
 

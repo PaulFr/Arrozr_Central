@@ -23,6 +23,8 @@ public:
     void saveSettings();
     void refresh();
     void arrose();
+    void askSendConf();
+    void sendConf();
 
     void readData(QByteArray requestData);
 
@@ -32,6 +34,7 @@ public:
     int getSeuil();
     int getHumidity();
     bool isSprinkling();
+    QString getLastSprinkle();
     QByteArray getSchedule();
     bool isModule();
 
@@ -49,6 +52,7 @@ private:
     QByteArray _schedule;
     bool _sprinkling;
     int _humidity;
+    QString _lastSprinkle;
     char *lastCommand;
     char askCommand;
     QByteArray buffer;
