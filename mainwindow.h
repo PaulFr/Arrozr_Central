@@ -33,13 +33,15 @@ private:
     QHash<int, Device*> devices;
     QHash<int, QListWidgetItem*> devicesItems;
     Device *selectedDevice;
-    unsigned char ToByte(bool b[8]);
-    void afficheBytes(unsigned char bytes[42]);
+    char ToByte(bool b[8]);
+    void afficheBytes(char bytes[42]);
     void setListeners();
     void createTimetable();
     void setTimetableStyle();
     void enableUi();
     void disableUi();
+    void fillTimetable();
+    void refreshUi();
 
 private slots:
     void selectedItems();
@@ -48,6 +50,9 @@ public slots:
     void addDevice(Device *device);
     void removeDevice(Device *device);
     void selectDevice(QModelIndex index);
+    void askArrosage();
+    void askRefresh();
+    void changeName(QString name);
 };
 
 #endif // MAINWINDOW_H

@@ -19,6 +19,9 @@ public:
     void setId(int id);
     void setSeuil(int seuil);
     void setSchedule(QByteArray schedule);
+    void saveSettings();
+    void refresh();
+    void arrose();
 
     QString getName();
     QString getPort() const;
@@ -32,11 +35,15 @@ signals:
 
 private:
     void readSettings();
+    void processRequest(char *command, char *buffer, QSerialPort &serial);
     QString _port;
     QString _name;
     int _id;
     int _seuil;
     QByteArray _schedule;
+    char *lastCommand;
+    char askCommand;
+
 
 };
 

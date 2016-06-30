@@ -20,10 +20,23 @@ MainWindow::MainWindow(QWidget *parent) :
     watcher.start();
 }
 
-void MainWindow::selectDevice(QModelIndex index){
-    selectedDevice = *devices.find(ui->listWidget->currentItem()->data(Qt::UserRole).toInt());
+void MainWindow::changeName(QString name){
+   selectedDevice->setName(name);
+   QListWidgetItem *item = *devicesItems.find(selectedDevice->getId());
+   item->setText(selectedDevice->getName()+" - "+selectedDevice->getPort());
+   refreshUi();
+}
+
+void MainWindow::refreshUi(){
     ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">"+selectedDevice->getName()+"</span></p></body></html>");
     ui->horizontalSlider->setValue(selectedDevice->getSeuil());
+    ui->nameEdit->setText(selectedDevice->getName());
+}
+
+void MainWindow::selectDevice(QModelIndex index){
+    selectedDevice = *devices.find(ui->listWidget->currentItem()->data(Qt::UserRole).toInt());
+    refreshUi();
+    fillTimetable();
     enableUi();
 }
 
@@ -33,7 +46,7 @@ void MainWindow::addDevice(Device *device){
     qDebug() << "new auth :" << id;
 
     QListWidgetItem *newItem = new QListWidgetItem;
-    newItem->setText(device->getName());
+    newItem->setText(device->getName()+" - "+device->getPort());
     newItem->setData(Qt::UserRole, id);
     devicesItems.insert(id, newItem);
 
@@ -55,30 +68,66 @@ void MainWindow::removeDevice(Device *device){
     delete item;
 }
 
-void MainWindow::selectedItems()
-{
-    unsigned char bytes[42];
-    bool bools[8];
+void MainWindow::fillTimetable(){
+    QByteArray schedule = selectedDevice->getSchedule();
+    qDebug() << "Available : " << schedule.size();
     int nbBits = 0;
     int nbByte = 0;
     for (int col = 0; col < ui->tableWidget->columnCount(); ++col) {
         for (int row = 0; row < ui->tableWidget->rowCount(); ++row) {
-            if (nbBits == 8){
-                nbBits = 0;
-                bytes[nbByte] = ToByte(bools);
+            if (nbBits != 0 && nbBits%8 == 0){
                 ++nbByte;
             }
 
-            bools[nbBits] = ui->tableWidget->item(row,col)->isSelected();
+            //qDebug() << "Bit" << QString("(%1 [%2;%3])").arg(nbBits).arg(nbByte).arg(nbBits%8) << " : " << ((schedule[nbByte] >> (nbBits%8)) & 1);
+            ui->tableWidget->item(row,col)->setSelected(bool((schedule[nbByte] >> (nbBits%8)) & 1));
             ++nbBits;
 
         }
     }
+}
+
+void MainWindow::askArrosage(){
+    selectedDevice->arrose();
+}
+
+void MainWindow::askRefresh(){
+    selectedDevice->refresh();
+}
+
+void MainWindow::selectedItems()
+{
+    QByteArray schedule;
+    selectedDevice->setSeuil(ui->horizontalSlider->value());
+
+    char bytes[42];
+    bool bools[8];
+    int nbBits = 0;
+    int nbByte = 0;
+    for (int col = 0; col < ui->tableWidget->columnCount(); col++) {
+        for (int row = 0; row < ui->tableWidget->rowCount(); row++) {
+
+            //qDebug() << QString("Row : %1, Col : %2, Bit : %3 (%4) -> %5").arg(row).arg(col).arg(nbBits).arg(nbBits%8).arg(ui->tableWidget->item(row,col)->isSelected() ? "SELECTED" : "no");
+            bools[nbBits%8] = ui->tableWidget->item(row,col)->isSelected();
+
+            ++nbBits;
+            if (nbBits != 0 && nbBits % 8 == 0){
+                bytes[nbByte] = ToByte(bools);
+                schedule.insert(nbByte, ToByte(bools));
+                ++nbByte;
+            }
+        }
+    }
+
+
+    qDebug() << "Available : " << schedule.size();
+    selectedDevice->setSchedule(schedule);
+    selectedDevice->saveSettings();
 
     afficheBytes(bytes);
 }
 
-void MainWindow::afficheBytes(unsigned char bytes[42]){
+void MainWindow::afficheBytes(char bytes[42]){
     QString retour;
     for (int i = 0; i < 42; ++i) {
         for (int j = 0; j < 8; ++j) {
@@ -89,9 +138,9 @@ void MainWindow::afficheBytes(unsigned char bytes[42]){
 
 }
 
-unsigned char MainWindow::ToByte(bool b[8])
+char MainWindow::ToByte(bool b[8])
 {
-    unsigned char c = 0;
+    char c = 0;
     for (int i=0; i < 8; ++i)
         if (b[i])
             c |= 1 << i;
@@ -100,7 +149,10 @@ unsigned char MainWindow::ToByte(bool b[8])
 
 void MainWindow::setListeners(){
     connect( ui->Envoyer, SIGNAL( pressed() ), this, SLOT( selectedItems() ) );
+    connect( ui->arrose, SIGNAL( pressed() ), this, SLOT( askArrosage() ) );
+    connect( ui->refresh, SIGNAL( pressed() ), this, SLOT( askRefresh() ) );
     connect(ui->listWidget, SIGNAL(clicked(QModelIndex)), this, SLOT( selectDevice(QModelIndex) ));
+    connect(ui->nameEdit, SIGNAL(textChanged(QString)), this, SLOT(changeName(QString)));
     connect(&watcher, SIGNAL(connected(Device*)), this, SLOT(addDevice(Device*)));
     connect(&watcher, SIGNAL(disconnected(Device*)), this, SLOT(removeDevice(Device*)));
 }
@@ -150,11 +202,20 @@ void MainWindow::disableUi(){
     ui->label->setText("<html><head/><body><p><span style=\"font-size:18pt\">Selectionnez un module</span></p></body></html>");
     ui->horizontalSlider->setEnabled(false);
     ui->tableWidget->setEnabled(false);
+    ui->Envoyer->setEnabled(false);
+    ui->humidite->setEnabled(false);
+    ui->nameEdit->setEnabled(false);
+    ui->arrose->setEnabled(false);
 }
 
 void MainWindow::enableUi(){
     ui->horizontalSlider->setEnabled(true);
     ui->tableWidget->setEnabled(true);
+    ui->tableWidget->setFocus();
+    ui->Envoyer->setEnabled(true);
+    ui->humidite->setEnabled(true);
+    ui->nameEdit->setEnabled(true);
+    ui->arrose->setEnabled(true);
 }
 
 MainWindow::~MainWindow()

@@ -4,6 +4,10 @@
 Device::Device(QString port, QObject *parent) :QThread(parent), _port(port), _id(0), _seuil(0), _schedule({})
 {
     _schedule.resize(42);
+    _schedule.fill(0);
+    lastCommand = new char;
+    *lastCommand = 0x00;
+    askCommand = 0x00;
 }
 
 Device::~Device(){
@@ -13,11 +17,19 @@ Device::~Device(){
 void Device::readSettings(){
     QSettings settings;
     _seuil = settings.value(QString("module/%1/seuil").arg(getId()), 0).toInt();
-    _name  = settings.value(QString("module/%1/name").arg(getId()), QString("Module %1 - "+getPort()).arg(getId())).toString();
+    _name  = settings.value(QString("module/%1/name").arg(getId()), QString("Module %1").arg(getId())).toString();
     _schedule = settings.value(QString("module/%1/schedule").arg(getId()), 0).toByteArray();
 }
 
+void Device::saveSettings(){
+    QSettings settings;
+    settings.setValue(QString("module/%1/seuil").arg(getId()), getSeuil());
+    settings.setValue(QString("module/%1/name").arg(getId()), getName());
+    settings.setValue(QString("module/%1/schedule").arg(getId()), getSchedule());
+}
+
 void Device::run(){
+
     QSerialPort serial;
     serial.setPortName(this->getPort());
     serial.setBaudRate(QSerialPort::Baud9600);
@@ -29,10 +41,10 @@ void Device::run(){
     serial.open(QIODevice::ReadWrite);
 
     while(serial.isOpen()){
-        qDebug() << "boucle" << isModule() << _id;
+        //qDebug() << "boucle" << isModule() << _id;
         //Si le module n'est pas un arroseur reconnu, on lui demande
         if(!isModule()){
-            qDebug() << "Not approuved module";
+            //qDebug() << "Not approuved module";
 
             QByteArray authCommand;
             authCommand.resize(1);
@@ -41,28 +53,86 @@ void Device::run(){
             serial.flush();
             //serial.waitForBytesWritten(1000);
 
-            if(serial.waitForReadyRead(10)){
-                if(serial.bytesAvailable() >= 2){
-                    QByteArray ba = serial.readAll();
-                    if(ba.at(0) == 0x01){
-                        this->setId(ba.at(1));
-                        emit authed(this);
-                    }
 
-                    readSettings();
+        }
 
-                    return;
-                    qDebug()<<"read:"<<ba ;
+        if(askCommand != 0x00){
+            QByteArray command;
+            command.resize(1);
+            command[0] = askCommand;
+            serial.write(command);
+            serial.flush();
+            qDebug() << "Ask : " << askCommand;
+            askCommand = 0x00;
+        }
+
+        if(serial.waitForReadyRead(10)){
+            if(serial.bytesAvailable() >= 1){
+                //QByteArray ba = serial.readAll();
+
+                char *buffer = new char[4];
+                int requiredBytes = 0;
+
+                if(*lastCommand == 0x00){
+                    serial.read(lastCommand, 1);
                 }
-            }
-        }else{
-            //C'est bon, on sait que c'est bien un module à nous
 
+                if(*lastCommand == 0x01){
+                    requiredBytes = 1;
+                }else if(*lastCommand == 0x02){
+                    requiredBytes = 0;
+                }else if(*lastCommand == 0x03){
+                    requiredBytes = 2;
+                }else if(*lastCommand == 0x04){
+                    requiredBytes = 2;
+                }
+                qDebug()<< QString("Commande %1 en attente de %2 octets").arg(*lastCommand).arg(requiredBytes) << endl;
+                if(serial.bytesAvailable() >= requiredBytes){
+                    if(requiredBytes > 0){
+                        serial.read(buffer, requiredBytes);
+                    }
+                    processRequest(lastCommand, buffer, serial);
+                    *lastCommand = 0x00;
+                }
+
+
+                //qDebug()<<"read:"<<ba ;
+            }
         }
         this->msleep(500);
     }
 
 
+}
+
+void Device::processRequest(char *command, char *buffer, QSerialPort &serial){
+    if(*command == 0x01){
+        qDebug() << "Auth";
+       this->setId(buffer[0]);
+       emit authed(this);
+       readSettings();
+
+    }else if(*command == 0x02){
+        qDebug() << "Demande EDT";
+        QByteArray scheduleCommand;
+        scheduleCommand.resize(44);
+        scheduleCommand[0] = 0x02;
+        scheduleCommand.fromHex(_schedule.toHex());
+        scheduleCommand[43] = _seuil;
+        serial.write(scheduleCommand);
+        serial.waitForBytesWritten(100);
+        serial.flush();
+    }
+}
+
+void Device::refresh(){
+    qDebug() << "refresh";
+    askCommand = 0x03;
+}
+
+void Device::arrose(){
+    qDebug() << "Arrosage";
+    askCommand = 0x04;
 }
 
 void Device::setId(int id){
