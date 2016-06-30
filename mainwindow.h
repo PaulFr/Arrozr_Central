@@ -52,6 +52,7 @@ public slots:
     void selectDevice(QModelIndex index);
     void askArrosage();
     void askRefresh();
+    void refreshDevice();
     void changeName(QString name);
 };
 

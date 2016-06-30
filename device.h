@@ -6,6 +6,7 @@
 #include <QSerialPort>
 #include <QtSerialPort/QtSerialPort>
 #include <QSettings>
+#include <QDataStream>
 
 class Device : public QThread
 {
@@ -23,26 +24,38 @@ public:
     void refresh();
     void arrose();
 
+    void readData(QByteArray requestData);
+
     QString getName();
     QString getPort() const;
     int getId();
     int getSeuil();
+    int getHumidity();
+    bool isSprinkling();
     QByteArray getSchedule();
     bool isModule();
 
 signals:
     void authed(Device *device);
+    void update();
 
 private:
     void readSettings();
-    void processRequest(char *command, char *buffer, QSerialPort &serial);
+    void processRequest(char *command, char *buffer);
     QString _port;
     QString _name;
     int _id;
     int _seuil;
     QByteArray _schedule;
+    bool _sprinkling;
+    int _humidity;
     char *lastCommand;
     char askCommand;
+    QByteArray buffer;
+    QSerialPort *serial;
+
+public slots:
+
 
 
 };

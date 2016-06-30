@@ -33,8 +33,13 @@ void MainWindow::refreshUi(){
     ui->nameEdit->setText(selectedDevice->getName());
 }
 
+void MainWindow::refreshDevice(){
+    ui->humidite->display(selectedDevice->getHumidity());
+}
+
 void MainWindow::selectDevice(QModelIndex index){
     selectedDevice = *devices.find(ui->listWidget->currentItem()->data(Qt::UserRole).toInt());
+    connect(selectedDevice, SIGNAL(update()), this, SLOT(refreshDevice()));
     refreshUi();
     fillTimetable();
     enableUi();
@@ -120,11 +125,11 @@ void MainWindow::selectedItems()
     }
 
 
-    qDebug() << "Available : " << schedule.size();
+    //qDebug() << "Available : " << schedule.size() << QString(schedule.toHex());
     selectedDevice->setSchedule(schedule);
     selectedDevice->saveSettings();
 
-    afficheBytes(bytes);
+
 }
 
 void MainWindow::afficheBytes(char bytes[42]){
@@ -206,6 +211,7 @@ void MainWindow::disableUi(){
     ui->humidite->setEnabled(false);
     ui->nameEdit->setEnabled(false);
     ui->arrose->setEnabled(false);
+    ui->refresh->setEnabled(false);
 }
 
 void MainWindow::enableUi(){
@@ -216,6 +222,7 @@ void MainWindow::enableUi(){
     ui->humidite->setEnabled(true);
     ui->nameEdit->setEnabled(true);
     ui->arrose->setEnabled(true);
+    ui->refresh->setEnabled(true);
 }
 
 MainWindow::~MainWindow()
